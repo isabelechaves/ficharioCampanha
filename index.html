@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fichário da Campanha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --paper: #F7F3EC;
+    --card: #FFFFFF;
+    --ink: #1F2937;
+    --navy: #1B2A4A;
+    --navy-dark: #142038;
+    --gold: #B5842A;
+    --gold-light: #EFDFC0;
+    --line: #E4DDCE;
+    --danger: #B4453A;
+    --muted: #6B7280;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    display:flex;
+    justify-content:center;
+    padding: 40px 16px 80px;
+  }
+  .wrap{ width:100%; max-width: 720px; }
+
+  header{ margin-bottom: 28px; }
+  .eyebrow{
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  h1{
+    font-family: 'Source Serif 4', serif;
+    font-weight: 600;
+    font-size: 32px;
+    margin: 0 0 6px;
+    color: var(--navy);
+  }
+  .sub{
+    color: var(--muted);
+    font-size: 14.5px;
+    line-height: 1.5;
+    max-width: 56ch;
+  }
+
+  .card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 2px rgba(27,42,74,0.04);
+  }
+  .card-title{
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 16px;
+  }
+
+  label.field-label{
+    display:block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .hint{
+    font-size: 12px;
+    color: var(--muted);
+    margin: -2px 0 14px;
+  }
+  input[type="text"]{
+    width:100%;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--ink);
+    background: #FFFDF9;
+  }
+  input[type="text"]:focus{
+    outline: 2px solid var(--gold-light);
+    outline-offset: 1px;
+    border-color: var(--gold);
+  }
+
+  .field-group{ margin-bottom: 16px; }
+  .field-row{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .field-row:last-child{ margin-bottom: 0; }
+  .field-group:last-child{ margin-bottom: 0; }
+
+  /* Drop zone styled as a folder tab */
+  .dropzone{
+    position: relative;
+    margin-top: 4px;
+    border: 2px dashed #C9BFA5;
+    border-radius: 12px;
+    background: #FFFDF9;
+    padding: 30px 20px 26px;
+    text-align:center;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .dropzone::before{
+    content: "";
+    position:absolute;
+    top: -13px;
+    left: 22px;
+    width: 84px;
+    height: 14px;
+    background: #FFFDF9;
+    border: 2px dashed #C9BFA5;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+  }
+  .dropzone.drag{
+    border-color: var(--gold);
+    background: #FBF3E3;
+  }
+  .dropzone .icon{
+    font-size: 26px;
+    margin-bottom: 8px;
+    display:block;
+  }
+  .dropzone .primary{
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+  .dropzone .secondary{
+    font-size: 13px;
+    color: #8A8272;
+    margin-top: 4px;
+  }
+  input[type="file"]{ display:none; }
+
+  .doc-list{
+    margin-top: 18px;
+    display:flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .doc-item{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #FFFDF9;
+  }
+  .doc-thumb{
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid var(--line);
+    flex-shrink: 0;
+    background: #eee;
+  }
+  .doc-info{ flex: 1; min-width:0; }
+  .doc-info input[type="text"]{
+    padding: 7px 9px;
+    font-size: 14px;
+    margin-bottom: 3px;
+  }
+  .doc-file{
+    font-size: 11.5px;
+    color: #9A927E;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .doc-actions{
+    display:flex;
+    align-items:center;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .icon-btn{
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #6B7280;
+    font-size: 15px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .icon-btn:hover{ background: #F1ECE0; color: var(--navy); }
+  .icon-btn.remove:hover{ background: #FBEAE7; color: var(--danger); }
+  .icon-btn:disabled{ opacity: 0.3; cursor: default; }
+  .icon-btn:disabled:hover{ background: transparent; color:#6B7280; }
+
+  .empty-state{
+    margin-top: 18px;
+    text-align:center;
+    color: #9A927E;
+    font-size: 13.5px;
+    padding: 6px 0 2px;
+  }
+
+  .footer-row{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .count{
+    font-size: 13px;
+    color: var(--muted);
+  }
+  button.primary{
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    padding: 12px 22px;
+    font-size: 14.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s ease, transform .05s ease;
+  }
+  button.primary:hover{ background: var(--navy-dark); }
+  button.primary:active{ transform: translateY(1px); }
+
+  .privacy-note{
+    display:flex;
+    gap: 8px;
+    align-items:flex-start;
+    font-size: 12.5px;
+    color: #8A8272;
+    margin-top: 18px;
+    line-height: 1.5;
+  }
+  .privacy-note svg{ flex-shrink:0; margin-top: 2px; }
+
+  @media (max-width: 480px){
+    .card{ padding: 18px; }
+    h1{ font-size: 26px; }
+    .doc-item{ flex-wrap: wrap; }
+    .field-row{ grid-template-columns: 1fr; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Fichário da Campanha</div>
+    <h1>Cadastro de Trabalhador</h1>
+    <p class="sub">Preencha os dados, anexe as fotos dos documentos e gere um PDF único — com o nome como título da ficha.</p>
+  </header>
+
+  <div class="card">
+    <p class="card-title">Dados do trabalhador</p>
+
+    <div class="field-group">
+      <label class="field-label" for="workerName">Nome</label>
+      <input type="text" id="workerName" placeholder="Nome completo" maxlength="80">
+      <p class="hint">Esse nome vira o título da ficha dentro do PDF e também o nome do arquivo baixado.</p>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="contato">Contato</label>
+      <input type="text" id="contato" placeholder="Telefone ou WhatsApp">
+    </div>
+
+    <div class="field-row">
+      <div>
+        <label class="field-label" for="nis">NIS</label>
+        <input type="text" id="nis" placeholder="Número do NIS">
+      </div>
+      <div>
+        <label class="field-label" for="pix">PIX</label>
+        <input type="text" id="pix" placeholder="Chave PIX">
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="banco">Dados bancários</label>
+      <input type="text" id="banco" placeholder="Banco">
+    </div>
+
+    <div class="field-row">
+      <div>
+        <label class="field-label" for="agencia">Agência</label>
+        <input type="text" id="agencia" placeholder="Número da agência">
+      </div>
+      <div>
+        <label class="field-label" for="conta">Conta</label>
+        <input type="text" id="conta" placeholder="Número da conta">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Imagens dos documentos</p>
+
+    <div class="dropzone" id="dropzone">
+      <span class="icon">📎</span>
+      <div class="primary">Arraste as imagens aqui ou clique para selecionar</div>
+      <div class="secondary">JPG, PNG, WEBP — pode escolher várias de uma vez</div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" multiple>
+
+    <div class="doc-list" id="docList"></div>
+    <div class="empty-state" id="emptyState">Nenhum documento anexado ainda.</div>
+  </div>
+
+  <div class="footer-row">
+    <span class="count" id="countLabel"></span>
+    <button class="primary" id="generateBtn">Gerar PDF</button>
+  </div>
+
+  <div class="privacy-note">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg>
+    <span>Tudo acontece aqui no seu navegador. Nenhum dado ou imagem é enviado para servidor algum — o PDF é montado localmente e baixado direto para o seu computador.</span>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const docList = document.getElementById('docList');
+  const emptyState = document.getElementById('emptyState');
+  const countLabel = document.getElementById('countLabel');
+  const generateBtn = document.getElementById('generateBtn');
+  const workerNameInput = document.getElementById('workerName');
+  const contatoInput = document.getElementById('contato');
+  const nisInput = document.getElementById('nis');
+  const pixInput = document.getElementById('pix');
+  const bancoInput = document.getElementById('banco');
+  const agenciaInput = document.getElementById('agencia');
+  const contaInput = document.getElementById('conta');
+
+  let docs = [];       // {id, fileName, name, dataUrl, width, height}
+  let counter = 0;
+  let idSeq = 0;
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+    handleFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', (e) => {
+    handleFiles(e.target.files);
+    fileInput.value = '';
+  });
+
+  async function handleFiles(fileList){
+    const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+    for (const file of files){
+      await addDoc(file);
+    }
+    render();
+  }
+
+  async function addDoc(file){
+    counter += 1;
+    const defaultName = 'Documento ' + counter;
+    let dataUrl, width, height;
+    try{
+      // Corrects EXIF rotation from phone photos when supported.
+      const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bitmap, 0, 0);
+      dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      width = bitmap.width;
+      height = bitmap.height;
+    } catch(err){
+      // Fallback for browsers without createImageBitmap orientation support.
+      dataUrl = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
+      const dims = await new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve({ w: img.width, h: img.height });
+        img.src = dataUrl;
+      });
+      width = dims.w; height = dims.h;
+    }
+    docs.push({
+      id: ++idSeq,
+      fileName: file.name,
+      name: defaultName,
+      dataUrl, width, height
+    });
+  }
+
+  function render(){
+    docList.innerHTML = '';
+    emptyState.style.display = docs.length ? 'none' : 'block';
+
+    docs.forEach((doc, index) => {
+      const item = document.createElement('div');
+      item.className = 'doc-item';
+
+      const thumb = document.createElement('img');
+      thumb.className = 'doc-thumb';
+      thumb.src = doc.dataUrl;
+      thumb.alt = doc.name;
+
+      const info = document.createElement('div');
+      info.className = 'doc-info';
+
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.value = doc.name;
+      nameInput.maxLength = 60;
+      nameInput.addEventListener('input', () => { doc.name = nameInput.value; });
+
+      const fileLabel = document.createElement('div');
+      fileLabel.className = 'doc-file';
+      fileLabel.textContent = doc.fileName;
+
+      info.appendChild(nameInput);
+      info.appendChild(fileLabel);
+
+      const actions = document.createElement('div');
+      actions.className = 'doc-actions';
+
+      const upBtn = document.createElement('button');
+      upBtn.className = 'icon-btn';
+      upBtn.innerHTML = '↑';
+      upBtn.title = 'Mover para cima';
+      upBtn.disabled = index === 0;
+      upBtn.addEventListener('click', () => { moveDoc(index, -1); });
+
+      const downBtn = document.createElement('button');
+      downBtn.className = 'icon-btn';
+      downBtn.innerHTML = '↓';
+      downBtn.title = 'Mover para baixo';
+      downBtn.disabled = index === docs.length - 1;
+      downBtn.addEventListener('click', () => { moveDoc(index, 1); });
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'icon-btn remove';
+      removeBtn.innerHTML = '✕';
+      removeBtn.title = 'Remover';
+      removeBtn.addEventListener('click', () => { docs.splice(index, 1); render(); });
+
+      actions.appendChild(upBtn);
+      actions.appendChild(downBtn);
+      actions.appendChild(removeBtn);
+
+      item.appendChild(thumb);
+      item.appendChild(info);
+      item.appendChild(actions);
+      docList.appendChild(item);
+    });
+
+    countLabel.textContent = docs.length
+      ? docs.length + ' documento(s) anexado(s)'
+      : '';
+  }
+
+  function moveDoc(index, delta){
+    const newIndex = index + delta;
+    if (newIndex < 0 || newIndex >= docs.length) return;
+    const tmp = docs[index];
+    docs[index] = docs[newIndex];
+    docs[newIndex] = tmp;
+    render();
+  }
+
+  function drawCoverPage(pdf, pageW, pageH, margin){
+    const name = workerNameInput.value.trim() || 'Sem nome';
+    const maxW = pageW - margin * 2;
+
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(10);
+    pdf.setTextColor(181, 132, 42);
+    pdf.text('FICHA DE CADASTRO', margin, 22);
+
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(26);
+    pdf.setTextColor(27, 42, 74);
+    const nameLines = pdf.splitTextToSize(name, maxW);
+    pdf.text(nameLines, margin, 34);
+
+    let y = 34 + nameLines.length * 9 + 6;
+    pdf.setDrawColor(228, 221, 206);
+    pdf.setLineWidth(0.4);
+    pdf.line(margin, y, pageW - margin, y);
+    y += 14;
+
+    const fields = [
+      ['Contato', contatoInput.value.trim()],
+      ['NIS', nisInput.value.trim()],
+      ['PIX', pixInput.value.trim()],
+      ['Dados bancários', bancoInput.value.trim()],
+      ['Agência', agenciaInput.value.trim()],
+      ['Conta', contaInput.value.trim()],
+    ];
+
+    fields.forEach(([label, value]) => {
+      if (!value) return;
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9.5);
+      pdf.setTextColor(107, 114, 128);
+      pdf.text(label.toUpperCase(), margin, y);
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(13);
+      pdf.setTextColor(31, 41, 55);
+      const lines = pdf.splitTextToSize(value, maxW);
+      pdf.text(lines, margin, y + 6.5);
+
+      y += 6.5 + lines.length * 6 + 9;
+    });
+  }
+
+  generateBtn.addEventListener('click', () => {
+    if (!workerNameInput.value.trim()){
+      alert('Preencha o nome do trabalhador antes de gerar o PDF.');
+      workerNameInput.focus();
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 18;
+
+    drawCoverPage(pdf, pageW, pageH, margin);
+
+    const imgMargin = 10;
+    const maxImgW = pageW - imgMargin * 2;
+    const maxImgH = pageH - imgMargin * 2;
+
+    docs.forEach((doc) => {
+      pdf.addPage();
+      const ratio = Math.min(maxImgW / doc.width, maxImgH / doc.height);
+      const w = doc.width * ratio;
+      const h = doc.height * ratio;
+      const x = (pageW - w) / 2;
+      const y = (pageH - h) / 2;
+      pdf.addImage(doc.dataUrl, 'JPEG', x, y, w, h);
+    });
+
+    let name = workerNameInput.value.trim().replace(/[\\/:*?"<>|]/g, '') || 'Documentos';
+    pdf.save(name + '.pdf');
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
